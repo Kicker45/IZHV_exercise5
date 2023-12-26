@@ -50,85 +50,85 @@ public class Character2DMovement : MonoBehaviour
 	private float mFallTimeoutDelta;
 
 	private bool mHeadingRight;
-	
+
 	private Character2DController mController;
 	private CharacterSelector mSelector;
 	private InputManager mInput;
-	
-    /// <summary>
-    /// Called before the first frame update.
-    /// </summary>
-    void Start()
-    {
-        mController = GetComponent<Character2DController>();
-        mSelector = GetComponent<CharacterSelector>();
-        mInput = GetComponent<InputManager>();
 
-        mTargetHorSpeed = 0.0f;
-        mTargetVerSpeed = 0.0f;
+	/// <summary>
+	/// Called before the first frame update.
+	/// </summary>
+	void Start()
+	{
+		mController = GetComponent<Character2DController>();
+		mSelector = GetComponent<CharacterSelector>();
+		mInput = GetComponent<InputManager>();
 
-        mJumpTimeoutDelta = JumpTimeout;
-        mJumpDurationDelta = 0.0f;
-        mFallTimeoutDelta = FallTimeout;
+		mTargetHorSpeed = 0.0f;
+		mTargetVerSpeed = 0.0f;
 
-        mHeadingRight = true;
-    }
+		mJumpTimeoutDelta = JumpTimeout;
+		mJumpDurationDelta = 0.0f;
+		mFallTimeoutDelta = FallTimeout;
 
-    /// <summary>
-    /// Update called once per frame.
-    /// </summary>
-    void Update()
-    {
-	    mTargetHorSpeed = mInput.sprint ? SprintSpeed : MoveSpeed;
-	    if (mInput.move == Vector2.zero)
-	    { mTargetHorSpeed = 0.0f; }
-    }
-    
-    /// <summary>
-    /// Update called at fixed intervals.
-    /// </summary>
-    void FixedUpdate ()
-    {
-	    MoveHorizontal();
-	    JumpAndGravity();
-	    AnimateCharacter();
-	    
+		mHeadingRight = true;
+	}
+
+	/// <summary>
+	/// Update called once per frame.
+	/// </summary>
+	void Update()
+	{
+		mTargetHorSpeed = mInput.sprint ? SprintSpeed : MoveSpeed;
+		if (mInput.move == Vector2.zero)
+		{ mTargetHorSpeed = 0.0f; }
+	}
+
+	/// <summary>
+	/// Update called at fixed intervals.
+	/// </summary>
+	void FixedUpdate()
+	{
+		MoveHorizontal();
+		JumpAndGravity();
+		AnimateCharacter();
+
 		var movement = new Vector3(
-			mHorizontalSpeed * Math.Sign(mInput.move.x), 
-			mVerticalSpeed, 
+			mHorizontalSpeed * Math.Sign(mInput.move.x),
+			mVerticalSpeed,
 			0.0f
 		);
-		
-	    mController.Move(movement * Time.fixedDeltaTime);
-    }
 
-    /// <summary>
-    /// Perform horizontal movement calculations.
-    /// </summary>
-    void MoveHorizontal()
-    {
+		mController.Move(movement * Time.fixedDeltaTime);
+	}
+
+	/// <summary>
+	/// Perform horizontal movement calculations.
+	/// </summary>
+	void MoveHorizontal()
+	{
 		var currentHorizontalSpeed = new Vector3(mController.velocity.x, 0.0f, mController.velocity.z).magnitude;
 
 		var speedOffset = 0.1f;
 		var inputMagnitude = mInput.analogMovement ? Math.Abs(mInput.move.x) : 1.0f;
 
-		if (currentHorizontalSpeed < mTargetHorSpeed - speedOffset || 
-		    currentHorizontalSpeed > mTargetHorSpeed + speedOffset)
+		if (currentHorizontalSpeed < mTargetHorSpeed - speedOffset ||
+			currentHorizontalSpeed > mTargetHorSpeed + speedOffset)
 		{
 			mHorizontalSpeed = Mathf.Lerp(
-				currentHorizontalSpeed, 
-				mTargetHorSpeed * inputMagnitude, 
+				currentHorizontalSpeed,
+				mTargetHorSpeed * inputMagnitude,
 				Time.fixedDeltaTime * SpeedChangeRate
 			);
 			mHorizontalSpeed = Mathf.Round(mHorizontalSpeed * 1000f) / 1000f;
 		}
 		else
 		{ mHorizontalSpeed = mTargetHorSpeed; }
-    }
-    
-    /// <summary>
-    /// Perform vertical movement calculations.
-    /// </summary>
+	}
+
+	/// <summary>
+	/// Perform vertical movement calculations.
+	/// </summary>
 	private void JumpAndGravity()
 	{
 		if (mController.isGrounded)
@@ -139,11 +139,11 @@ public class Character2DMovement : MonoBehaviour
 			{
 				mTargetVerSpeed = Mathf.Sqrt(JumpSpeed * 2.0f * Gravity);
 				mJumpTimeoutDelta = JumpTimeout;
-				mJumpDurationDelta = JumpDuration; 
+				mJumpDurationDelta = JumpDuration;
 			}
 			else
 			{ mTargetVerSpeed = mVerticalSpeed; }
-			
+
 			if (mJumpTimeoutDelta >= 0.0f)
 			{ mJumpTimeoutDelta -= Time.fixedDeltaTime; }
 		}
@@ -152,73 +152,88 @@ public class Character2DMovement : MonoBehaviour
 			mTargetVerSpeed = mInput.jump && mJumpDurationDelta >= 0.0f
 				? Mathf.Sqrt(JumpSpeed * 2.0f * Gravity)
 				: mVerticalSpeed;
-			
+
 			if (mJumpDurationDelta >= 0.0f)
 			{ mJumpDurationDelta -= Time.fixedDeltaTime; }
-			
+
 			if (mFallTimeoutDelta >= 0.0f)
 			{ mFallTimeoutDelta -= Time.fixedDeltaTime; }
 		}
-		
+
 		var currentVerticalSpeed = mController.velocity.y;
-		
+
 		var speedOffset = 0.1f;
 		var inputMagnitude = 1.0f;
 
-		if (currentVerticalSpeed < mTargetVerSpeed - speedOffset || 
+		if (currentVerticalSpeed < mTargetVerSpeed - speedOffset ||
 			currentVerticalSpeed > mTargetVerSpeed + speedOffset)
 		{
 			mVerticalSpeed = Mathf.Lerp(
-				currentVerticalSpeed, 
-				mTargetVerSpeed * inputMagnitude, 
+				currentVerticalSpeed,
+				mTargetVerSpeed * inputMagnitude,
 				Time.fixedDeltaTime * JumpChangeRate
 			);
 			mVerticalSpeed = Mathf.Round(mVerticalSpeed * 1000f) / 1000f;
 		}
 		else
 		{ mVerticalSpeed = mTargetVerSpeed; }
-		
+
 		if (mVerticalSpeed > mTerminalVelocity)
 		{ mVerticalSpeed -= Gravity * Time.fixedDeltaTime; }
 	}
 
-    /// <summary>
-    /// Run animation according to the current state.
-    /// </summary>
-    void AnimateCharacter()
-    {
-	    /*
-	     * Task #1a: Orienting the character
-	     *
-	     * Let us start by at least orienting the character, making him face the
-	     * correct way based on the desired direction of movement. Currently, when
-	     * walking left or right, the sprite is always looking the same.
-	     * 
-	     * To fix this, we need to orient the character properly. This can be done
-	     * in several ways, but the easiest is to modify the transform of the GO
-	     * based on its intended orientation.
-	     *
-	     * Let's presume that by default the character is heading right, represented
-	     * by the member variable *mHeadingRight* being true. You can detect direction
-	     * we are driving the character to go by examining the value of *mInput.move.x*.
-	     *
-	     * Now, modify the GO transform (hint: either scale or rotation will work) to
-	     * fix this problem.
-	     *
-	     * Helpful variables and methods:
-	     *   * Transform of the Game Object: *transform*
-	     *   * Scale and Rotation: *transform.localScale* and *transform.localRotation*
-	     *   * Input direction: *mInput.move.x*
-	     *   * Persistent heading flag: *mHeadingRight*
-	     *   * Rotating a local rotation by an axis: localRotation *= Quaternion.Euler(...)
-	     */
-	    
-	    var animator = mSelector.charAnimator;
-	    if (animator != null)
-	    {
-			var currentVerticalSpeed = mController.velocity.y;
+	/// <summary>
+	/// Run animation according to the current state.
+	/// </summary>
+	void AnimateCharacter()
+	{
+		/*
+		 * Task #1a: Orienting the character
+		 *
+		 * Let us start by at least orienting the character, making him face the
+		 * correct way based on the desired direction of movement. Currently, when
+		 * walking left or right, the sprite is always looking the same.
+		 * 
+		 * To fix this, we need to orient the character properly. This can be done
+		 * in several ways, but the easiest is to modify the transform of the GO
+		 * based on its intended orientation.
+		 *
+		 * Let's presume that by default the character is heading right, represented
+		 * by the member variable *mHeadingRight* being true. You can detect the direction
+		 * we are driving the character to go by examining the value of *mInput.move.x*.
+		 *
+		 * Now, modify the GO transform (hint: either scale or rotation will work) to
+		 * fix this problem.
+		 *
+		 * Helpful variables and methods:
+		 *   * Transform of the Game Object: *transform*
+		 *   * Scale and Rotation: *transform.localScale* and *transform.localRotation*
+		 *   * Input direction: *mInput.move.x*
+		 *   * Persistent heading flag: *mHeadingRight*
+		 *   * Rotating a local rotation by an axis: localRotation *= Quaternion.Euler(...)
+		 */
+
+		var animator = mSelector.charAnimator;
+		if (animator != null)
+		{
 			var currentHorizontalSpeed = new Vector3(mController.velocity.x, 0.0f, mController.velocity.z).magnitude;
-			
+
+			// Task #1a: Orienting the character
+			if (currentHorizontalSpeed > 0.1f || currentHorizontalSpeed < -0.1f)
+			{
+				if (mInput.move.x > 0.1f)
+				{
+					mHeadingRight = true;
+				}
+				else if (mInput.move.x < -0.1f)
+				{
+					mHeadingRight = false;
+				}
+
+				// Orient the character based on mHeadingRight
+				transform.localScale = new Vector3(mHeadingRight ? 1 : -1, 1, 1);
+			}
+
 			// Property values: 
 			var speed = currentHorizontalSpeed;
 			var moveSpeed = Math.Abs(mTargetHorSpeed / MoveSpeedAnimation);
@@ -228,7 +243,7 @@ public class Character2DMovement : MonoBehaviour
 			var falling = !mController.isGrounded && mFallTimeoutDelta <= 0.0f;
 
 			/*
-			 * Task #1a: Passing properties to the Animator
+			 * Task #1b: Passing properties to the Animator
 			 * 
 			 * After rotating the character, he should now be able to look in the
 			 * correct direction, based on the movement. However, more detailed
@@ -265,6 +280,15 @@ public class Character2DMovement : MonoBehaviour
 			 *   * Current Animator instance: *animator*
 			 *   * Animator methods: *SetFloat* and *SetBool*
 			 */
-	    }
-    }
+
+			// Task #1b: Passing properties to the Animator
+			animator.SetFloat("Speed", speed);
+			animator.SetFloat("MoveSpeed", moveSpeed);
+			animator.SetBool("Jump", jump);
+			animator.SetBool("Grounded", grounded);
+			animator.SetBool("Fall", falling);
+			animator.SetBool("Crouch", crouch);
+		}
+	}
+
 }
